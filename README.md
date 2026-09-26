@@ -54,3 +54,16 @@ Persian text.
 
 Design checks: `impeccable 0.1.3` reports `slop=0 quality=0`, with one advisory for the
 intentional canvas grid. Verified at 375 / 768 / 1440 px plus dark mode.
+
+## `profile.md`
+
+Implementation-ready specification for the **Hermes Research Engine** (HRE): a separate,
+self-hosted multi-agent system (Researcher, Evaluator, Scorer, Reporter, orchestrated by a
+non-LLM Conductor over a Postgres task queue) that researches fintech markets and ranks
+startup concepts against an evidence-backed unicorn rubric. It covers the agent architecture,
+the scoring rubric and calibration approach, the Ubuntu + Docker + Postgres + Caddy +
+Prometheus/Grafana/Loki stack with hardening, step-by-step deployment, and the 24/7 runbook.
+
+HRE coexists with Hermes Agent on the same VPS without touching `~/.hermes`: it lives in
+`/opt/hermes-research`, is served on tailnet port 8443 (443 stays with the cockpit), and keeps
+its own secrets. **Status: specification, not yet implemented.**
