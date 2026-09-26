@@ -9,29 +9,62 @@ If a task is blocked, write why under it, leave it unchecked, and take the next 
 
 ## P0. Establish the facts (read-only, blocking for P5 onward)
 
-- [ ] **P0.1 [VPS]** Map the gateway API. Search the installed source for its routes
+- [x] **P0.1 [VPS]** Map the gateway API. Search the installed source for its routes
   (`grep -rn "v1/" /opt/hermes --include=*.py | grep -iE "route|app\.(get|post)|path" | head -40`)
   and list every endpoint with method and auth requirement.
   *Done when:* `orchestra/docs/FACTS.md` has a "Gateway API" table, where each row quotes the source line it came from.
-- [ ] **P0.2 [VPS]** Test `POST /v1/chat/completions` with `stream: true`, a 10-word prompt and `max_tokens: 20`,
+  - Proof: `orchestra/docs/FACTS.md` "Gateway API" section — table built from
+    `_CAPABILITY_ENDPOINTS` (`/opt/hermes/gateway/platforms/api_server.py`
+    lines 78–97), quote: `("chat_completions", ("POST", "/v1/chat/completions"))`,
+    `("session_chat_stream", ("POST", "/api/sessions/{session_id}/chat/stream"))`.
+    Plus live verification of /v1/capabilities, /v1/models, /api/model/options.
+- [x] **P0.2 [VPS]** Test `POST /v1/chat/completions` with `stream: true`, a 10-word prompt and `max_tokens: 20`,
   loading the key inside the command (PLAYBOOK rule 5). Record the HTTP status, whether SSE `data:` chunks
   arrive, time to first chunk and total time (`curl -w`), with the output redacted to its shape.
   *Done when:* FACTS.md states streaming is "supported" or "not supported", with the quoted evidence.
-- [ ] **P0.3 [VPS]** Pick two different model ids from `/v1/models` and send the same request with each.
+  - Proof (FACTS.md "Streaming"): `status=200 ttfb_s=0.002168 total_s=3.055508`,
+    7 `data:` chunks, final `data: [DONE]`. Streaming **supported**.
+- [x] **P0.3 [VPS]** Pick two different model ids from `/v1/models` and send the same request with each.
   Compare the `model` field in the responses.
   *Done when:* FACTS.md states whether per-request model choice is "honoured" or "ignored", with evidence.
-- [ ] **P0.4 [VPS]** Find out how conversation state works (does the client resend history, or do headers or ids keep a session?)
+  - Proof (FACTS.md "Per-request model choice"): `/v1/models` lists only
+    `['hermes-agent']` (one virtual entry), so the task as written has no two
+    model ids to compare. The underlying question was settled by source +
+    live test: bare `model` **ignored** (`model=zzz-bogus-nonexistent-model` →
+    200, name echoed, default model answered; source `_request_agent_overrides`
+    lines 343–365 + `direct_model_requests` default False at lines 1190–1191),
+    `model` + `provider` together **honoured** (`openrouter/openrouter/free` +
+    `provider=openrouter` → different model answered). `/api/model/options`
+    lists 13 authenticated providers for the picker.
+- [x] **P0.4 [VPS]** Find out how conversation state works (does the client resend history, or do headers or ids keep a session?)
   from the source found in P0.1.
   *Done when:* FACTS.md quotes the code path that decides it.
-- [ ] **P0.5 [VPS]** Test the Python tooling: `python3 --version; python3 -m venv /tmp/orch-venv && /tmp/orch-venv/bin/pip install --dry-run fastapi 2>&1 | tail -2; rm -rf /tmp/orch-venv`
+  - Proof (FACTS.md "Conversation state"): source `_derive_chat_session_id`
+    (line 1044) derives the session from system prompt + first user message
+    (sha256[:16], `api-` prefix). Live: same messages[0] → same
+    `X-Hermes-Session-Id: api-a9b323cbe8dd9e66` and memory intact ("7741"
+    recalled); different opening message → new session `api-cab07612ab4c79eb`,
+    memory gone. Client resends history; gateway derives the session.
+- [x] **P0.5 [VPS]** Test the Python tooling: `python3 --version; python3 -m venv /tmp/orch-venv && /tmp/orch-venv/bin/pip install --dry-run fastapi 2>&1 | tail -2; rm -rf /tmp/orch-venv`
   *Done when:* FACTS.md states whether a venv with pip can install from PyPI.
-- [ ] **P0.6 [VPS]** Record the current exposure baseline: `ps -eo args | grep -cE 'cloudflared|ngrok|localtunnel'`,
+  - Proof (FACTS.md "Python tooling"): `Python 3.13.5`; venv created;
+    `Would install ... fastapi-0.141.1 ... starlette-1.7.0`. Installs from PyPI: yes.
+- [x] **P0.6 [VPS]** Record the current exposure baseline: `ps -eo args | grep -cE 'cloudflared|ngrok|localtunnel'`,
   `tailscale --socket=/opt/data/.tailscale/tailscaled.sock serve status`, and whether port 8790 is free
   (`grep -i ':2256 ' /proc/net/tcp /proc/net/tcp6`).
   *Done when:* FACTS.md has the three results, and `sh orchestra/ops/gates/exposure.sh` exits 0.
-- [ ] **P0.7 [ANY]** Compare FACTS.md with SPEC §3 and §8. For every settled decision a fact contradicts,
+  - Proof (FACTS.md "Exposure baseline"): grep count 3 explained (all three
+    matches are the grep pipeline's own wrapper lines; `grep -v grep` → empty,
+    no real tunnel process); `serve status` shows three tailnet-only rules
+    (8788, 8642, https 8900), no Funnel; port 8790 free; exposure gate →
+    "exposure gate clean", exit 0.
+- [x] **P0.7 [ANY]** Compare FACTS.md with SPEC §3 and §8. For every settled decision a fact contradicts,
   write the conflict and the smallest change that would resolve it.
   *Done when:* FACTS.md ends with "Spec conflicts: none", or with a list. **If there is a list, stop the loop and ask the owner.**
+  - Proof: FACTS.md final section — "Spec conflicts: none". D1–D10 all
+    survive. Two implementation notes filed for P2/P3 (model picker sources
+    `/api/model/options`; requests send `provider`+`model` together) — within
+    the spec, not conflicts.
 
 ## P1. Backend skeleton
 
