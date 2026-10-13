@@ -1,7 +1,7 @@
 ---
 name: hermes-os-loop
 description: Rules for the Hermes OS cron loop (morning report and nightly safe step) on Ferry's VPS.
-version: 1.0.0
+version: 1.1.0
 platforms: [linux]
 metadata:
   hermes:
@@ -40,14 +40,16 @@ Ferry reads your final answer in Persian. Claude reviews your commits later.
 
 ## Morning job (`hos-morning`): read-only
 
-Do not edit any file. Collect, then answer in simple Persian, max 25 lines:
+Do not edit any file. Collect, then answer in simple Persian, max 25 lines.
+Copy the date from `date_jalali` in the context exactly; never compute or
+guess a date yourself.
 
 1. First line: `SECURITY: ...` if anything listens publicly other than SSH
    (`ss -tln`), else skip this line.
 2. VPS health: disk use %, free RAM, load, uptime (one line each).
-3. Loop: last night's `hos-step` result (from the context or
-   `hermes cron runs hos-step --limit 1`), and the next `[ ]` item in
-   `ops/loop/QUEUE.md`.
+3. Loop: last night's `hos-step` result is `last_step` in the context (the
+   last commit on `hermes/loop`). Trust it; do not say the job never ran when
+   `last_step` shows a commit. Then the next `[ ]` item in `ops/loop/QUEUE.md`.
 4. needs-ferry: every item tagged `needs-ferry` or `[!]` blocked, one line each,
    with exactly what Ferry must do.
 5. One sentence: the single most useful thing Ferry can do today (max 20 minutes).
