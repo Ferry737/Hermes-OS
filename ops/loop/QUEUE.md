@@ -13,7 +13,7 @@ reword items; it may only change the box and write a `Result:` / `Blocked:` line
 
 ---
 
-- [ ] **Q1. VPS inventory.** Write `ops/reports/vps-inventory.md`: OS and
+- [x] **Q1. VPS inventory.** Write `ops/reports/vps-inventory.md`: OS and
   version, CPU cores, RAM, disk size and free space, swap, timezone
   (`timedatectl`), `hermes --version`, configured main model and cron model
   (`hermes config` output with keys redacted), installed: docker, python3, node,
@@ -21,6 +21,7 @@ reword items; it may only change the box and write a `Result:` / `Blocked:` line
   *Never write:* IP addresses, hostnames, usernames, keys, tailnet names.
   *Done when:* the file exists, every line above is filled or says "missing",
   and `sh ops/gates/secrets.sh` exits 0.
+  Result: ops/reports/vps-inventory.md written (Debian 13, 2-core EPYC, 7.8G RAM, 96G disk 25% used, no swap, UTC; hermes v0.21.5 docker, docker 26.1.5, python3 3.13.5, node v26.5.1, git 2.47.3; tailscale and opencode missing). secrets.sh: "secrets gate clean" exit 0; tests.sh exit 0.
 
 - [ ] **Q2. Exposure audit (read-only).** Run `ss -tlnp` (or `ss -tln` without
   root). Write `ops/reports/exposure.md`: one row per listening port, the
