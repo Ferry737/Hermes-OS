@@ -23,12 +23,19 @@ reword items; it may only change the box and write a `Result:` / `Blocked:` line
   and `sh ops/gates/secrets.sh` exits 0.
   Result: ops/reports/vps-inventory.md written (Debian 13, 2-core EPYC, 7.8G RAM, 96G disk 25% used, no swap, UTC; hermes v0.21.5 docker, docker 26.1.5, python3 3.13.5, node v26.5.1, git 2.47.3; tailscale and opencode missing). secrets.sh: "secrets gate clean" exit 0; tests.sh exit 0.
 
-- [ ] **Q2. Exposure audit (read-only).** Run `ss -tlnp` (or `ss -tln` without
+- [x] **Q2. Exposure audit (read-only).** Run `ss -tlnp` (or `ss -tln` without
   root). Write `ops/reports/exposure.md`: one row per listening port, the
   process, and whether it binds `127.0.0.1`/tailnet (OK) or `0.0.0.0`/`::`
   (PUBLIC). Do not change any firewall or service.
   *Done when:* the table exists. If any row is PUBLIC other than SSH, put
   "SECURITY: public port N" as the first line of tonight's report.
+  Result: ops/reports/exposure.md written. ss/netstat/lsof are all missing on this
+  host, so sockets were read from /proc/net/tcp{,6} and matched to PIDs via
+  /proc/<pid>/fd socket inodes. PUBLIC: port 4860 (hermes dashboard, --host
+  0.0.0.0, pid 140) and port 8644 IPv4+IPv6 (hermes gateway, 0.0.0.0/::, pid
+  67426; same pid also holds loopback 8642). Loopback-only: 8642, 20241, 20242,
+  20244 (cloudflared), 41619 (docker DNS). No sshd in this namespace and no
+  ufw/iptables/nft installed. Nothing changed. secrets.sh exit 0, tests.sh exit 0.
 
 - [ ] **Q3. Backup check (read-only).** Find out whether `~/.hermes` and this
   repo are backed up anywhere (cron, systemd timers, restic/borg config).
