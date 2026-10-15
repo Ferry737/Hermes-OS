@@ -37,10 +37,23 @@ reword items; it may only change the box and write a `Result:` / `Blocked:` line
   20244 (cloudflared), 41619 (docker DNS). No sshd in this namespace and no
   ufw/iptables/nft installed. Nothing changed. secrets.sh exit 0, tests.sh exit 0.
 
-- [ ] **Q3. Backup check (read-only).** Find out whether `~/.hermes` and this
+- [x] **Q3. Backup check (read-only).** Find out whether `~/.hermes` and this
   repo are backed up anywhere (cron, systemd timers, restic/borg config).
   Write the answer into `ops/reports/backups.md`. Do not create a backup job.
   *Done when:* the file says "backed up by X" or "NOT backed up".
+  Result: ops/reports/backups.md written. Repo: backed up by git → GitHub
+  origin (git ls-remote origin refs/heads/hermes/loop = cf345bf = local HEAD).
+  Hermes home (HERMES_HOME=/opt/data, ~1.2G incl. .env, state.db, sessions,
+  skills): NOT backed up. crontab binary missing, /var/spool/cron absent,
+  /etc/cron.d + /etc/cron.hourly absent, /etc/cron.daily only apt-compat+dpkg,
+  systemctl missing (no timers), hermes cron list has 4 jobs, none a backup.
+  restic/borg/borgmatic/kopia/duplicity/rsnapshot/rclone/rsync all missing;
+  no restic/borg/rclone config anywhere; no hermes-backup-*.zip on the host.
+  Local same-disk copies only: /opt/data/backups/config (6 config.yaml
+  snapshots + 1 .env.pre-docker-migrate), /opt/data/.env.bak + .env.bak2,
+  /opt/data/.curator_backups/blobs (88 skill blobs, 660K),
+  /opt/data/home/.claude/backups (2 files). Nothing created or scheduled.
+  secrets.sh "secrets gate clean" exit 0; tests.sh "tests gate clean" exit 0.
 
 - [ ] **Q4. Free market data for the ORB test (T1).** Download BTCUSDT 1-minute
   klines for the last 12 full months from `https://data.binance.vision`
